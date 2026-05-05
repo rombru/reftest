@@ -30,7 +30,7 @@ jobs:
 
           echo "Day 21 July 2026 - cama_lliures: $FREE"
 
-          if [ "$FREE" -gt 0 ]; then
+          if [ "$FREE" -ge 0 ]; then
             curl -X POST "https://ntfy.sh/rom-refus-july-21" \
               -H "Title: 🏕️ Bed available!" \
               -H "Priority: urgent" \
