@@ -1,0 +1,41 @@
+name: Check Refus Availability
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+  workflow_dispatch:  # manual trigger from GitHub UI
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check day 21 July availability
+        run: |
+          RESPONSE=$(curl -s "https://refusonline.com/calendari/get_estat_mes/141/07/2026" \
+            -H 'accept: application/json, text/javascript, */*; q=0.01' \
+            -H 'x-requested-with: XMLHttpRequest' \
+            -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+
+          FREE=$(echo "$RESPONSE" | python3 -c "
+          import json, sys
+          try:
+            data = json.load(sys.stdin)
+            for item in data:
+              if item.get('dia') == 21:
+                print(item.get('cama_lliures', 0))
+                sys.exit(0)
+            print(0)
+          except:
+            print(0)
+          ")
+
+          echo "Day 21 July 2026 - cama_lliures: $FREE"
+
+          if [ "$FREE" -gt 0 ]; then
+            curl -X POST "https://ntfy.sh/rom-refus-july-21" \
+              -H "Title: 🏕️ Bed available!" \
+              -H "Priority: urgent" \
+              -H "Tags: camping" \
+              -d "Day 21 July 2026 has $FREE bed(s) free! Book now: https://refusonline.com/fr/carte-reserves-en-ligne"
+          else
+            echo "No availability yet."
+          fi
